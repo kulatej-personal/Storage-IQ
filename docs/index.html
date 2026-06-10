@@ -345,7 +345,10 @@
         <div class="nav-item" onclick="openModal('historyModal')"><span class="nav-icon">📦</span> Commits</div>
         <div class="nav-item" onclick="fetchData()"><span class="nav-icon">⟳</span> Force Refresh</div>
       </div>
-      
+      <div class="nav-section">
+        <div class="nav-label">Accounts</div>
+        <div class="nav-item" onclick="openModal('addAccountModal')" style="color:#00D4FF;border:1px dashed rgba(0,212,255,0.3)"><span class="nav-icon">＋</span> Add Account</div>
+      </div>
       <div class="nav-section">
         <div class="nav-label">Appearance</div>
         <button class="theme-btn" onclick="toggleTheme()">
@@ -355,54 +358,54 @@
         </button>
       </div>
     </nav>
-    <!-- ACCOUNTS + SSO -->
     <div style="padding:12px 14px;border-top:1px solid var(--border)">
-      <div id="ssoAccounts"><div style="font-size:11px;color:var(--muted);padding:4px">Loading...</div></div>
+      <div id="ssoAcc"><div style="font-size:11px;color:var(--muted);padding:4px">Loading...</div></div>
     </div>
     <script>
     (function(){
       var CID='333060411541-1k13lptckleri5ff6nq7t871d3sn6hcs.apps.googleusercontent.com';
-      var STORE='siq_accts';
+      var K='siq_accts';
+      var GSVG='<svg width="15" height="15" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>';
 
-      function getSaved(){return JSON.parse(localStorage.getItem(STORE)||'[]');}
+      function gs(){return JSON.parse(localStorage.getItem(K)||'[]');}
       function r2(n){return Math.round(n*100)/100;}
       function r1(n){return Math.round(n*10)/10;}
 
-      function render(){
-        var el=document.getElementById('ssoAccounts');
+      function render(s){
+        var el=document.getElementById('ssoAcc');
         if(!el)return;
-        var saved=getSaved();
-        var activeId=(typeof activeAccountId!=='undefined')?activeAccountId:'';
-        var G='<svg width="16" height="16" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>';
-        var html='<div style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-weight:700;padding:0 2px">Accounts</div>';
-        if(saved.length===0){
-          html+='<button onclick="window._ssoSignIn()" style="display:flex;align-items:center;gap:9px;width:100%;padding:11px 12px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.3);border-radius:10px;cursor:pointer;color:var(--text);font-size:13px;font-weight:600;font-family:inherit">'+G+'Sign in with Google</button>';
+        var saved=gs();
+        var aid=(typeof activeAccountId!=='undefined')?activeAccountId:'';
+        var h='<div style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-weight:700">Accounts</div>';
+        if(s==='load'){h+='<div style="font-size:11px;color:var(--cyan);padding:6px 4px;text-align:center">⏳ Connecting...</div>';}
+        else if(s==='fetch'){h+='<div style="font-size:11px;color:var(--cyan);padding:6px 4px;text-align:center">⏳ Loading your data...</div>';}
+        else if(saved.length===0){
+          h+='<button onclick="window._ssi()" style="display:flex;align-items:center;gap:9px;width:100%;padding:11px 12px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.3);border-radius:10px;cursor:pointer;color:var(--text);font-size:13px;font-weight:600;font-family:inherit">'+GSVG+'Sign in with Google</button>';
         } else {
           saved.forEach(function(a){
-            var act=a.id===activeId;
+            var act=a.id===aid;
             var dot=a.pct_used>85?'#FF4D6D':a.pct_used>65?'#FFB020':'#00E676';
-            html+='<div onclick="window._ssoSwitch(''+a.id+'')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;background:'+(act?'var(--glass2)':'transparent')+';border:1px solid '+(act?'var(--border-cyan)':'transparent')+';border-radius:9px;margin-bottom:4px;cursor:pointer">'
+            h+='<div onclick="window._ssw(''+a.id+'')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;background:'+(act?'var(--glass2)':'transparent')+';border:1px solid '+(act?'var(--border-cyan)':'transparent')+';border-radius:9px;margin-bottom:4px;cursor:pointer;transition:all .15s">'
               +(a.picture?'<img src="'+a.picture+'" style="width:28px;height:28px;border-radius:50%;flex-shrink:0">'
-                :'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,'+a.gradient[0]+','+a.gradient[1]+');display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0">'+a.initials+'</div>')
+              :'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,'+a.gradient[0]+','+a.gradient[1]+');display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0">'+a.initials+'</div>')
               +'<div style="flex:1;min-width:0">'
                 +'<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-                  +a.name+(act?' <span style="color:#00E676">✓</span>':'')
+                  +a.name+(act?' <span style="color:#00E676;font-size:12px">✓</span>':'')
                 +'</div>'
                 +'<div style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.email+'</div>'
               +'</div>'
               +'<div style="width:7px;height:7px;border-radius:50%;background:'+dot+';flex-shrink:0"></div>'
               +'</div>';
           });
-          html+='<button onclick="window._ssoSignIn()" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;background:none;border:1px dashed rgba(66,133,244,.35);border-radius:9px;cursor:pointer;color:#4285F4;font-size:11px;font-weight:600;font-family:inherit;margin-top:4px">'+G+'Sign in with another account</button>';
-          html+='<div style="text-align:center;margin-top:6px"><span onclick="window._ssoSignOut()" style="font-size:10px;color:var(--muted);cursor:pointer;text-decoration:underline">Sign out all</span></div>';
+          h+='<button onclick="window._ssi()" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;background:none;border:1px dashed rgba(66,133,244,.35);border-radius:9px;cursor:pointer;color:#4285F4;font-size:11px;font-weight:600;font-family:inherit;margin-top:4px">'+GSVG+'Sign in with another account</button>';
+          h+='<div style="text-align:center;margin-top:6px"><span onclick="window._sso()" style="font-size:10px;color:var(--muted);cursor:pointer;text-decoration:underline">Sign out all</span></div>';
         }
-        el.innerHTML=html;
+        el.innerHTML=h;
       }
-      window._ssoRender=render;
+      window.renderSidebarAccounts=render;
 
-      window._ssoSignIn=function(){
-        var el=document.getElementById('ssoAccounts');
-        if(el)el.innerHTML='<div style="font-size:11px;color:var(--cyan);padding:8px 4px;text-align:center">⏳ Connecting...</div>';
+      window._ssi=function(){
+        render('load');
         function attempt(n){
           if(window.google&&google.accounts){
             google.accounts.oauth2.initTokenClient({
@@ -416,11 +419,10 @@
         attempt(0);
       };
 
-      window._ssoSwitch=function(id){
-        var saved=getSaved();
+      window._ssw=function(id){
+        var saved=gs();
         if(typeof accounts!=='undefined'){
-          accounts=saved;
-          activeAccountId=id;
+          accounts=saved; activeAccountId=id;
           setTimeout(function(){
             if(typeof renderAll==='function')renderAll();
             if(typeof renderSlicerChips==='function')renderSlicerChips();
@@ -429,9 +431,9 @@
         render();
       };
 
-      window._ssoSignOut=function(){
+      window._sso=function(){
         if(!confirm('Sign out all accounts?'))return;
-        localStorage.removeItem(STORE);
+        localStorage.removeItem(K);
         if(typeof accounts!=='undefined'){accounts=[];activeAccountId='';}
         if(typeof renderAll==='function')renderAll();
         if(typeof renderSlicerChips==='function')renderSlicerChips();
@@ -439,41 +441,39 @@
       };
 
       async function fetchData(at){
-        var el=document.getElementById('ssoAccounts');
-        if(el)el.innerHTML='<div style="font-size:11px;color:var(--cyan);padding:8px 4px;text-align:center">⏳ Loading data...</div>';
+        render('fetch');
         var h={'Authorization':'Bearer '+at};
         try{
-          var p=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:h}).then(function(r){return r.json();});
-          var d=await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota',{headers:h}).then(function(r){return r.json();});
+          var p=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:h}).then(function(x){return x.json();});
+          var d=await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota',{headers:h}).then(function(x){return x.json();});
           var q=d.storageQuota||{};
-          var uGB=r2(parseInt(q.usage||0)/Math.pow(1024,3));
-          var tGB=r1(parseInt(q.limit||15*Math.pow(1024,3))/Math.pow(1024,3));
-          var fGB=r2(tGB-uGB);
-          var pct=Math.round(uGB/tGB*100);
-          var grade=pct<30?'A':pct<50?'B':pct<65?'C+':pct<80?'C':'D';
-          var gGB=r2(uGB*.55),drGB=r2(uGB*.30),phGB=r2(uGB*.12),otGB=r2(Math.max(0,uGB-gGB-drGB-phGB));
-          var saved=getSaved();
-          var grads=[['#4285F4','#34A853'],['#EA4335','#FBBC04'],['#7B5EA7','#00D4FF'],['#00832D','#34A853']];
-          var g=grads[saved.length%grads.length];
+          var u=r2(parseInt(q.usage||0)/Math.pow(1024,3));
+          var t=r1(parseInt(q.limit||15*Math.pow(1024,3))/Math.pow(1024,3));
+          var f=r2(t-u); var pc=Math.round(u/t*100);
+          var gr=pc<30?'A':pc<50?'B':pc<65?'C+':pc<80?'C':'D';
+          var gB=r2(u*.55),dB=r2(u*.30),pB=r2(u*.12),oB=r2(Math.max(0,u-gB-dB-pB));
+          var sv=gs();
+          var grs=[['#4285F4','#34A853'],['#EA4335','#FBBC04'],['#7B5EA7','#00D4FF'],['#00832D','#34A853']];
+          var g=grs[sv.length%grs.length];
           var ini=(p.name||'G').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-          var acct={id:'g_'+p.id,name:p.name,email:p.email,picture:p.picture||'',initials:ini,gradient:g,
-            plan:tGB>15?'Google One '+tGB+' GB':'Free 15 GB',
-            used_gb:uGB,total_gb:tGB,free_gb:fGB,pct_used:pct,
-            health_pct:Math.max(10,100-pct),health_grade:grade,
-            spam_gb:0,recover_gb:r2(uGB*.15),
-            days_left:fGB>0?Math.min(999,Math.round(fGB/.3*30)):0,
-            junk_mb:0,dup_gb:r2(drGB*.1),
+          var ac={id:'g_'+p.id,name:p.name,email:p.email,picture:p.picture||'',initials:ini,gradient:g,
+            plan:t>15?'Google One '+t+' GB':'Free 15 GB',
+            used_gb:u,total_gb:t,free_gb:f,pct_used:pc,
+            health_pct:Math.max(10,100-pc),health_grade:gr,
+            spam_gb:0,recover_gb:r2(u*.15),
+            days_left:f>0?Math.min(999,Math.round(f/.3*30)):0,
+            junk_mb:0,dup_gb:r2(dB*.1),
             services:{
-              gmail:{used_gb:gGB,msg_count:0,inbox_count:0,spam_count:0,trash_count:0,promo_count:0,pct:Math.round(gGB/tGB*100)},
-              drive:{used_gb:drGB,file_count:0,folder_count:0,duplicate_count:0,duplicate_gb:0,pct:Math.round(drGB/tGB*100)},
-              photos:{used_gb:phGB,total_items:0,photo_count:0,video_count:0,album_count:0,pct:Math.round(phGB/tGB*100)},
-              other:{used_gb:otGB,pct:Math.round(otGB/tGB*100)}
+              gmail:{used_gb:gB,msg_count:0,inbox_count:0,spam_count:0,trash_count:0,promo_count:0,pct:Math.round(gB/t*100)},
+              drive:{used_gb:dB,file_count:0,folder_count:0,duplicate_count:0,duplicate_gb:0,pct:Math.round(dB/t*100)},
+              photos:{used_gb:pB,total_items:0,photo_count:0,video_count:0,album_count:0,pct:Math.round(pB/t*100)},
+              other:{used_gb:oB,pct:Math.round(oB/t*100)}
             },synced_at:new Date().toISOString()};
-          var idx=saved.findIndex(function(a){return a.email===acct.email;});
-          if(idx>=0)saved[idx]=acct; else saved.push(acct);
-          localStorage.setItem(STORE,JSON.stringify(saved));
+          var ix=sv.findIndex(function(x){return x.email===ac.email;});
+          if(ix>=0)sv[ix]=ac; else sv.push(ac);
+          localStorage.setItem(K,JSON.stringify(sv));
           if(typeof accounts!=='undefined'){
-            accounts=saved; activeAccountId=acct.id;
+            accounts=sv; activeAccountId=ac.id;
             setTimeout(function(){
               if(typeof renderAll==='function')renderAll();
               if(typeof renderSlicerChips==='function')renderSlicerChips();
@@ -481,25 +481,20 @@
           }
           render();
         }catch(e){
-          var el2=document.getElementById('ssoAccounts');
-          if(el2)el2.innerHTML='<div style="font-size:11px;color:var(--rose);padding:4px">❌ '+e.message+'</div><button onclick="_ssoSignIn()" style="width:100%;margin-top:6px;padding:8px;background:#4285F4;border:none;border-radius:8px;color:#fff;font-size:12px;cursor:pointer">Retry</button>';
+          var el=document.getElementById('ssoAcc');
+          if(el)el.innerHTML='<div style="color:#FF4D6D;font-size:11px;padding:4px">❌ '+e.message+'</div>'
+            +'<button onclick="window._ssi()" style="width:100%;margin-top:6px;padding:8px;background:#4285F4;border:none;border-radius:8px;color:#fff;font-size:12px;cursor:pointer">Retry</button>';
         }
       }
 
-      // Override renderSidebarAccounts so main dashboard also uses this
-      window.renderSidebarAccounts=render;
-
-      // Init on load
       document.addEventListener('DOMContentLoaded',function(){
-        var saved=getSaved();
-        if(saved.length>0){
-          if(typeof accounts!=='undefined'){
-            accounts=saved; activeAccountId=saved[0].id;
-            setTimeout(function(){
-              if(typeof renderAll==='function')renderAll();
-              if(typeof renderSlicerChips==='function')renderSlicerChips();
-            },800);
-          }
+        var sv=gs();
+        if(sv.length>0&&typeof accounts!=='undefined'){
+          accounts=sv; activeAccountId=sv[0].id;
+          setTimeout(function(){
+            if(typeof renderAll==='function')renderAll();
+            if(typeof renderSlicerChips==='function')renderSlicerChips();
+          },800);
         }
         render();
       });
