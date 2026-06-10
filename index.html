@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StorageIQ · Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  /* ─────────────────────────────────────────────
+     CONFIGURE: set your GitHub repo here
+     Format: "username/repo-name"
+     The repo must have data/accounts.json at its root
+  ───────────────────────────────────────────── */
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#050B18;--bg2:#080F20;--bg3:#0D1628;--bg4:#111E35;
+    --cyan:#00D4FF;--cyan2:#00A8CC;--violet:#7B5EA7;
+    --amber:#FFB020;--rose:#FF4D6D;--green:#00E676;
+    --text:#E8F0FE;--muted:#6B80A0;--subtle:#1E2D4A;
+    --glass:rgba(255,255,255,0.04);--glass2:rgba(0,212,255,0.06);
+    --border:rgba(255,255,255,0.07);--border-cyan:rgba(0,212,255,0.2);
+  }
+  html{font-size:14px;scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+
+  /* ── Layout ── */
+  .layout{display:flex;min-height:100vh}
+  .sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .main{flex:1;display:flex;flex-direction:column;overflow-x:hidden}
+
+  /* ── Sidebar ── */
+  .sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+  .logo-mark{display:flex;align-items:center;gap:10px}
+  .logo-hex{width:32px;height:32px;background:linear-gradient(135deg,var(--cyan),var(--violet));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .logo-text{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px}
+  .logo-sub{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+  .logo-version{font-size:9px;color:var(--violet);font-family:'Space Mono',monospace;margin-top:2px}
+  .nav{padding:16px 12px;flex:1}
+  .nav-section{margin-bottom:24px}
+  .nav-label{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin-bottom:8px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px}
+  .nav-item:hover{background:var(--glass);color:var(--text)}
+  .nav-item.active{background:var(--glass2);color:var(--cyan);border:1px solid var(--border-cyan)}
+  .nav-icon{font-size:16px;width:20px;text-align:center}
+  .nav-badge{margin-left:auto;background:var(--rose);color:#fff;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:600}
+
+  /* ── Sidebar accounts ── */
+  .sidebar-accounts{padding:12px 14px;border-top:1px solid var(--border)}
+  .sidebar-accounts-label{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding:0 4px}
+  .acct-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;transition:all .15s;margin-bottom:4px;border:1px solid transparent}
+  .acct-item:hover{background:var(--glass)}
+  .acct-item.acct-active{background:var(--glass2);border-color:var(--border-cyan)}
+  .acct-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;position:relative}
+  .acct-avatar-dot{position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;border:2px solid var(--bg2)}
+  .acct-info{flex:1;min-width:0}
+  .acct-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acct-email{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acct-storage-mini{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);flex-shrink:0}
+  .acct-add-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:500;border:1px dashed var(--border);margin-top:4px;transition:all .15s;background:none;width:100%;font-family:'Inter',sans-serif}
+  .acct-add-btn:hover{border-color:var(--border-cyan);color:var(--cyan);background:var(--glass2)}
+  .acct-add-icon{width:26px;height:26px;border-radius:50%;background:var(--subtle);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+  /* ── Top Bar ── */
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap}
+  .topbar-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;flex:0 0 auto}
+  .acct-slicer{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:4px 6px;overflow-x:auto;max-width:380px;scrollbar-width:none;flex:1}
+  .acct-slicer::-webkit-scrollbar{display:none}
+  .slicer-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;border:1px solid transparent;flex-shrink:0}
+  .slicer-chip:hover{background:var(--glass)}
+  .slicer-chip.slicer-active{background:var(--glass2);border-color:var(--border-cyan)}
+  .slicer-all{font-size:11px;font-weight:600;color:var(--muted)}
+  .slicer-all.slicer-active{color:var(--cyan)}
+  .slicer-chip-avatar{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+  .slicer-chip-label{font-size:11px;font-weight:500;color:var(--muted)}
+  .slicer-chip.slicer-active .slicer-chip-label{color:var(--text)}
+  .slicer-divider{width:1px;height:20px;background:var(--border);flex-shrink:0}
+  .slicer-add-chip{display:flex;align-items:center;gap:4px;padding:5px 8px;border-radius:7px;cursor:pointer;border:1px dashed var(--border);font-size:11px;color:var(--muted);transition:all .15s;flex-shrink:0}
+  .slicer-add-chip:hover{border-color:var(--border-cyan);color:var(--cyan)}
+
+  /* ── Status pill ── */
+  .status-pill{display:flex;align-items:center;gap:6px;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;border:1px solid;flex-shrink:0}
+  .status-pill.live{background:rgba(0,230,118,.08);border-color:rgba(0,230,118,.2);color:var(--green)}
+  .status-pill.loading{background:rgba(255,176,32,.08);border-color:rgba(255,176,32,.2);color:var(--amber)}
+  .status-pill.error{background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.2);color:var(--rose)}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+  .last-sync{font-size:11px;color:var(--muted);flex-shrink:0}
+  .sync-btn{display:flex;align-items:center;gap:6px;background:var(--glass2);border:1px solid var(--border-cyan);color:var(--cyan);padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;flex-shrink:0}
+  .sync-btn:hover{background:rgba(0,212,255,.12);transform:translateY(-1px)}
+  .sync-btn:disabled{opacity:.5;cursor:wait;transform:none}
+
+  /* ── GitHub config banner ── */
+  .config-banner{display:flex;align-items:center;gap:12px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:12px;padding:12px 16px;margin-bottom:20px}
+  .config-banner input{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;font-family:'Space Mono',monospace;outline:none;min-width:0}
+  .config-banner input:focus{border-color:var(--border-cyan)}
+  .config-banner-btn{background:linear-gradient(135deg,var(--cyan2),var(--violet));border:none;border-radius:7px;color:#fff;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;white-space:nowrap;flex-shrink:0}
+
+  /* ── Combined banner ── */
+  .combined-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(123,94,167,.06));border:1px solid var(--border-cyan);border-radius:12px;padding:12px 16px;margin-bottom:20px}
+  .combined-banner-icon{font-size:20px}
+  .combined-banner-text{flex:1;font-size:12px;color:var(--muted)}
+  .combined-banner-text strong{color:var(--text)}
+  .combined-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .combined-chip{display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid var(--border-cyan);background:var(--glass2);color:var(--cyan)}
+
+  /* ── Content ── */
+  .content{padding:24px 28px;flex:1}
+
+  /* ── GitHub version history strip ── */
+  .gh-strip{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:20px;overflow-x:auto}
+  .gh-strip-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0}
+  .gh-commit{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;background:var(--bg4);border:1px solid var(--border);font-size:10px;color:var(--muted);cursor:pointer;transition:all .15s;flex-shrink:0;text-decoration:none}
+  .gh-commit:hover{border-color:var(--border-cyan);color:var(--cyan)}
+  .gh-commit-sha{font-family:'Space Mono',monospace;color:var(--cyan)}
+  .gh-commit-msg{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gh-commit-time{color:var(--muted);flex-shrink:0}
+
+  /* ── KPI Strip ── */
+  .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+  .kpi{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s}
+  .kpi:hover{border-color:var(--border-cyan)}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--cyan))}
+  .kpi-eyebrow{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;font-weight:500}
+  .kpi-value{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;line-height:1;margin-bottom:6px}
+  .kpi-value span{font-size:14px;font-weight:500;color:var(--muted);margin-left:2px}
+  .kpi-delta{font-size:11px;font-weight:500}
+  .kpi-delta.warn{color:var(--rose)} .kpi-delta.good{color:var(--green)}
+  .kpi-icon{position:absolute;top:14px;right:14px;font-size:22px;opacity:.25}
+
+  /* ── Galaxy ── */
+  .hero-row{display:grid;grid-template-columns:1fr 340px;gap:20px;margin-bottom:24px}
+  .galaxy-card{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden}
+  .galaxy-card-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;margin-bottom:4px}
+  .galaxy-card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+  .galaxy-wrap{display:flex;align-items:center;gap:28px}
+  .galaxy-canvas-wrap{position:relative;flex-shrink:0}
+  #galaxyCanvas{display:block}
+  .galaxy-center-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+  .galaxy-total{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;line-height:1}
+  .galaxy-total-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .galaxy-legend{flex:1}
+  .legend-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer}
+  .legend-item:last-child{border-bottom:none}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .legend-label{font-size:12px;font-weight:500;flex:1}
+  .legend-size{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)}
+  .legend-pct{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-left:8px;min-width:36px;text-align:right}
+
+  /* ── Storage summary ── */
+  .storage-summary{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:24px}
+  .storage-header{margin-bottom:18px}
+  .storage-header h3{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin-bottom:4px}
+  .storage-header p{font-size:12px;color:var(--muted)}
+  .storage-bar-outer{background:var(--subtle);border-radius:6px;height:8px;margin-bottom:18px;overflow:hidden}
+  .storage-bar-inner{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width 1.2s cubic-bezier(.4,0,.2,1);position:relative}
+  .storage-bar-inner::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25));animation:shimmer 2s infinite}
+  @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  .storage-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stat-box{background:var(--bg4);border-radius:10px;padding:12px 14px}
+  .stat-box-label{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+  .stat-box-val{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700}
+  .stat-box-val.cyan{color:var(--cyan)}.stat-box-val.green{color:var(--green)}.stat-box-val.amber{color:var(--amber)}.stat-box-val.rose{color:var(--rose)}
+  .health-score{margin-top:16px;background:var(--bg4);border-radius:10px;padding:14px}
+  .health-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .health-label{font-size:12px;font-weight:500}
+  .health-grade{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700}
+  .health-bar{background:var(--subtle);border-radius:4px;height:4px}
+  .health-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rose),var(--amber),var(--green));transition:width 1.5s ease}
+
+  /* ── Service grid (dynamic) ── */
+  .section-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+  .service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+  .service-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+  .service-card:hover{border-color:var(--border-cyan);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,255,.08)}
+  .service-card-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.06;filter:blur(16px)}
+  .service-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .service-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .service-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px}
+  .service-type{font-size:11px;color:var(--muted)}
+  .meter-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+  .meter-label{font-size:11px;color:var(--muted)}
+  .meter-val{font-family:'Space Mono',monospace;font-size:11px}
+  .meter-bar{background:var(--subtle);border-radius:4px;height:5px;overflow:hidden;margin-bottom:12px}
+  .meter-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+  .service-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+  .tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+  .tag.warning{background:rgba(255,176,32,.1);color:var(--amber);border:1px solid rgba(255,176,32,.2)}
+  .tag.danger{background:rgba(255,77,109,.1);color:var(--rose);border:1px solid rgba(255,77,109,.2)}
+  .tag.ok{background:rgba(0,230,118,.08);color:var(--green);border:1px solid rgba(0,230,118,.15)}
+  .tag.info{background:rgba(0,212,255,.08);color:var(--cyan);border:1px solid rgba(0,212,255,.15)}
+  .service-stats-row{display:flex;border-top:1px solid var(--border);padding-top:12px}
+  .sstat{flex:1;text-align:center}
+  .sstat:not(:last-child){border-right:1px solid var(--border)}
+  .sstat-val{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700}
+  .sstat-label{font-size:9px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+
+  /* ── Recommendations ── */
+  .reco-card{background:linear-gradient(135deg,rgba(123,94,167,.12),rgba(0,212,255,.06));border:1px solid var(--border-cyan);border-radius:14px;padding:20px;margin-bottom:24px}
+  .reco-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .reco-icon{font-size:24px}
+  .reco-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px}
+  .reco-sub{font-size:12px;color:var(--muted)}
+  .reco-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .reco-item{background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border)}
+  .reco-priority{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+  .reco-priority.high{color:var(--rose)}.reco-priority.med{color:var(--amber)}.reco-priority.low{color:var(--green)}
+  .reco-text{font-size:12px;line-height:1.5;margin-bottom:8px}
+  .reco-save{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--green)}
+
+  /* ── Toast ── */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--green);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s;z-index:200}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast-icon{font-size:18px}
+
+  /* ── Modal ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(5,11,24,.8);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--bg3);border:1px solid var(--border-cyan);border-radius:16px;width:520px;max-width:90vw;padding:28px;transform:translateY(16px);transition:transform .25s;box-shadow:0 24px 80px rgba(0,212,255,.1);position:relative}
+  .modal-overlay.open .modal{transform:translateY(0)}
+  .modal-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:4px}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+  .modal-close{position:absolute;top:16px;right:16px;cursor:pointer;font-size:18px;color:var(--muted);background:none;border:none;padding:4px 8px;border-radius:6px}
+  .modal-close:hover{color:var(--text)}
+  .modal-step{display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--bg4);border-radius:10px;margin-bottom:8px}
+  .step-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--cyan2),var(--violet));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+  .step-text{font-size:12px;line-height:1.5}
+  .modal-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--cyan2),var(--violet));border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:opacity .2s;margin-top:8px}
+  .modal-btn:hover{opacity:.85}
+
+  /* ── Footer ── */
+  .footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .footer-note{font-size:11px;color:var(--muted)}
+  .footer-links{display:flex;gap:16px}
+  .footer-link{font-size:11px;color:var(--muted);cursor:pointer;transition:color .15s}
+  .footer-link:hover{color:var(--cyan)}
+
+  ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--subtle);border-radius:4px}
+
+  @media(max-width:1200px){.kpi-strip{grid-template-columns:repeat(3,1fr)}.hero-row{grid-template-columns:1fr}.service-grid{grid-template-columns:repeat(2,1fr)}.reco-list{grid-template-columns:1fr 1fr}}
+  @media(max-width:768px){.sidebar{display:none}.kpi-strip{grid-template-columns:repeat(2,1fr)}.service-grid{grid-template-columns:1fr}.reco-list{grid-template-columns:1fr}.content{padding:16px}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-hex">🔵</div>
+        <div>
+          <div class="logo-text">StorageIQ</div>
+          <div class="logo-sub">Live · GitHub</div>
+          <div class="logo-version" id="repoLabel">not configured</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Overview</div>
+        <div class="nav-item active"><span class="nav-icon">⬡</span> Dashboard</div>
+        <div class="nav-item" onclick="openModal('historyModal')"><span class="nav-icon">🕐</span> Version History</div>
+        <div class="nav-item" onclick="openModal('configModal')"><span class="nav-icon">⚙</span> Configure Repo</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Google Services</div>
+        <div class="nav-item"><span class="nav-icon">📧</span> Gmail</div>
+        <div class="nav-item"><span class="nav-icon">💾</span> Drive</div>
+        <div class="nav-item"><span class="nav-icon">🖼</span> Photos</div>
+        <div class="nav-item"><span class="nav-icon">📅</span> Calendar</div>
+        <div class="nav-item"><span class="nav-icon">📄</span> Docs</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Version Control</div>
+        <div class="nav-item" onclick="openModal('historyModal')"><span class="nav-icon">📦</span> Commits</div>
+        <div class="nav-item" onclick="fetchData()"><span class="nav-icon">⟳</span> Force Refresh</div>
+      </div>
+    </nav>
+    <div class="sidebar-accounts" id="sidebarAccountList">
+      <div class="sidebar-accounts-label">Accounts</div>
+      <div style="font-size:11px;color:var(--muted);padding:0 4px">Loading...</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Storage Intelligence</div>
+      <div class="acct-slicer" id="acctSlicer">
+        <div class="slicer-all" style="font-size:11px;padding:4px 8px;color:var(--muted)">Loading accounts...</div>
+      </div>
+      <div class="status-pill loading" id="statusPill">
+        <div class="status-dot"></div>
+        <span id="statusText">Fetching</span>
+      </div>
+      <div class="last-sync" id="lastSyncLabel">—</div>
+      <button class="sync-btn" id="syncBtn" onclick="fetchData()">⟳ Refresh</button>
+    </div>
+
+    <div class="content">
+
+      <!-- GitHub config banner — shown when repo not set -->
+      <div class="config-banner" id="configBanner">
+        <span style="font-size:20px">🔗</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px">Connect your GitHub repo</div>
+          <div style="font-size:11px;color:var(--muted)">Enter <code>username/repo</code> where <code>data/accounts.json</code> lives</div>
+        </div>
+        <input id="repoInput" type="text" placeholder="youruser/storageiq-data" value=""/>
+        <button class="config-banner-btn" onclick="saveRepoConfig()">Connect →</button>
+      </div>
+
+      <!-- Combined banner -->
+      <div class="combined-banner" id="combinedBanner" style="display:none">
+        <div class="combined-banner-icon">⬡</div>
+        <div class="combined-banner-text">
+          <strong>Combined View</strong> — aggregated across <span id="combinedCount">0</span> accounts
+        </div>
+        <div class="combined-chips" id="combinedChips"></div>
+      </div>
+
+      <!-- GitHub commit history strip -->
+      <div class="gh-strip" id="ghStrip" style="display:none">
+        <div class="gh-strip-label">📦 History</div>
+        <div id="ghCommits" style="display:flex;gap:6px">
+          <span style="font-size:11px;color:var(--muted)">Loading...</span>
+        </div>
+      </div>
+
+      <!-- KPI Strip -->
+      <div class="kpi-strip">
+        <div class="kpi" style="--accent:#00D4FF">
+          <div class="kpi-eyebrow">Total Storage Used</div>
+          <div class="kpi-value" id="kpi-storage">—<span>GB</span></div>
+          <div class="kpi-delta" id="kpi-storage-delta">—</div>
+          <div class="kpi-icon">🗄</div>
+        </div>
+        <div class="kpi" style="--accent:#FF4D6D">
+          <div class="kpi-eyebrow">Spam & Junk</div>
+          <div class="kpi-value" id="kpi-spam">—<span>GB</span></div>
+          <div class="kpi-delta warn">↑ Can free immediately</div>
+          <div class="kpi-icon">🗑</div>
+        </div>
+        <div class="kpi" style="--accent:#00E676">
+          <div class="kpi-eyebrow">Recoverable Space</div>
+          <div class="kpi-value" id="kpi-recover">—<span>GB</span></div>
+          <div class="kpi-delta good">↓ With smart cleanup</div>
+          <div class="kpi-icon">♻️</div>
+        </div>
+        <div class="kpi" style="--accent:#FFB020">
+          <div class="kpi-eyebrow">Storage Health</div>
+          <div class="kpi-value" id="kpi-health">—<span>%</span></div>
+          <div class="kpi-delta" id="kpi-health-delta">—</div>
+          <div class="kpi-icon">❤️</div>
+        </div>
+        <div class="kpi" style="--accent:#7B5EA7">
+          <div class="kpi-eyebrow">Days Until Full</div>
+          <div class="kpi-value" id="kpi-days">—<span>d</span></div>
+          <div class="kpi-delta warn">↑ At current growth rate</div>
+          <div class="kpi-icon">📆</div>
+        </div>
+      </div>
+
+      <!-- Hero Row -->
+      <div class="hero-row">
+        <div class="galaxy-card">
+          <div class="galaxy-card-title">Storage Galaxy</div>
+          <div class="galaxy-card-sub" id="galaxySub">Visual breakdown — fetching live data...</div>
+          <div class="galaxy-wrap">
+            <div class="galaxy-canvas-wrap">
+              <canvas id="galaxyCanvas" width="220" height="220"></canvas>
+              <div class="galaxy-center-label">
+                <div class="galaxy-total" id="galaxyPct">—%</div>
+                <div class="galaxy-total-sub" id="galaxySubLabel">— / — GB</div>
+              </div>
+            </div>
+            <div class="galaxy-legend" id="galaxyLegend">
+              <div style="font-size:11px;color:var(--muted);padding:8px 0">Waiting for data...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="storage-summary">
+          <div class="storage-header">
+            <h3>Quota Status</h3>
+            <p id="quotaSubLabel">— GB shared across services</p>
+          </div>
+          <div class="storage-bar-outer">
+            <div class="storage-bar-inner" id="mainBar" style="width:0%"></div>
+          </div>
+          <div class="storage-stats">
+            <div class="stat-box"><div class="stat-box-label">Used</div><div class="stat-box-val cyan" id="stat-used">—</div></div>
+            <div class="stat-box"><div class="stat-box-label">Available</div><div class="stat-box-val green" id="stat-free">—</div></div>
+            <div class="stat-box"><div class="stat-box-label">Junk Mail</div><div class="stat-box-val rose" id="stat-junk">—</div></div>
+            <div class="stat-box"><div class="stat-box-label">Duplicates</div><div class="stat-box-val amber" id="stat-dup">—</div></div>
+          </div>
+          <div class="health-score">
+            <div class="health-row">
+              <span class="health-label">Storage Health Score</span>
+              <span class="health-grade" id="healthGrade">—</span>
+            </div>
+            <div class="health-bar"><div class="health-bar-fill" id="healthBar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic service cards -->
+      <div class="section-title">Service Breakdown</div>
+      <div class="service-grid" id="serviceGrid">
+        <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted);font-size:13px">
+          ⏳ Fetching service data from GitHub...
+        </div>
+      </div>
+
+      <!-- Dynamic recommendations -->
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-icon">🤖</div>
+          <div>
+            <div class="reco-title">AI Storage Recommendations</div>
+            <div class="reco-sub">Generated from your live account data</div>
+          </div>
+        </div>
+        <div class="reco-list" id="recoList">
+          <div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);font-size:12px">
+            Recommendations will appear after data loads...
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+
+    <div class="footer">
+      <div class="footer-note" id="footerNote">StorageIQ · Powered by GitHub as version control</div>
+      <div class="footer-links">
+        <div class="footer-link" onclick="openModal('configModal')">⚙ Configure</div>
+        <div class="footer-link" onclick="openModal('historyModal')">📦 History</div>
+        <div class="footer-link" onclick="exportJSON()">📤 Export JSON</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Config Modal -->
+<div class="modal-overlay" id="configModal" onclick="closeOnBg(event,'configModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('configModal')">✕</button>
+    <div class="modal-title">⚙ Configure GitHub Source</div>
+    <div class="modal-sub">The dashboard reads <code>data/accounts.json</code> from your GitHub repo</div>
+    <div class="modal-step"><div class="step-num">1</div><div class="step-text">Create a <strong>public GitHub repo</strong> (or use an existing one) and clone it locally.</div></div>
+    <div class="modal-step"><div class="step-num">2</div><div class="step-text">Run <code>bash run.sh</code> inside the StorageIQ folder. It authenticates, fetches real data, and pushes <code>data/accounts.json</code> to your repo.</div></div>
+    <div class="modal-step"><div class="step-num">3</div><div class="step-text">Enter your <code>username/repo</code> below, then click Connect. The dashboard fetches live JSON on every load and on every Refresh click.</div></div>
+    <div class="modal-step"><div class="step-num">4</div><div class="step-text">Optional: push to GitHub and the included <code>.github/workflows/sync.yml</code> auto-syncs every 6 hours, committing a new version each time.</div></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <input id="configRepoInput" type="text" placeholder="youruser/storageiq-data" style="flex:1;padding:10px 12px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:'Space Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--border-cyan)'" onblur="this.style.borderColor='var(--border)'"/>
+      <button class="modal-btn" style="width:auto;padding:10px 16px;margin-top:0" onclick="saveRepoConfig()">Connect</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted)">Settings are saved in your browser's localStorage.</div>
+  </div>
+</div>
+
+<!-- Version History Modal -->
+<div class="modal-overlay" id="historyModal" onclick="closeOnBg(event,'historyModal')">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('historyModal')">✕</button>
+    <div class="modal-title">📦 GitHub Version History</div>
+    <div class="modal-sub">Every sync run creates a new commit — full audit trail of your storage data</div>
+    <div id="historyList" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Loading commits...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">✅</div>
+  <div id="toastMsg">Done</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+const LS_REPO_KEY = 'storageiq_github_repo';
+let GITHUB_REPO   = localStorage.getItem(LS_REPO_KEY) || '';
+const DATA_PATH   = 'data/accounts.json';
+const BRANCH      = 'main';
+
+// Raw GitHub content URL
+function rawUrl()    { return `https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/${DATA_PATH}?t=${Date.now()}`; }
+function commitsUrl(){ return `https://api.github.com/repos/${GITHUB_REPO}/commits?path=${DATA_PATH}&per_page=20`; }
+function commitUrl(sha){ return `https://api.github.com/repos/${GITHUB_REPO}/contents/${DATA_PATH}?ref=${sha}`; }
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let accounts        = [];
+let activeAccountId = 'all';
+let currentPayload  = null;   // full JSON from GitHub
+let commitHistory   = [];
+let animProg        = 0;
+let spinAngle       = 0;
+let highlighted     = -1;
+
+const servicesData = [
+  { label:'Gmail',  pct:.54, color:'#EA4335' },
+  { label:'Drive',  pct:.27, color:'#4285F4' },
+  { label:'Photos', pct:.16, color:'#34A853' },
+  { label:'Other',  pct:.03, color:'#FBBC04' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// REPO CONFIG
+// ═══════════════════════════════════════════════════════════════
+function saveRepoConfig() {
+  const inputs = [document.getElementById('repoInput'), document.getElementById('configRepoInput')];
+  let val = '';
+  inputs.forEach(i => { if(i && i.value.trim()) val = i.value.trim(); });
+  if(!val || !val.includes('/')) { showToast('⚠️', 'Enter format: username/repo-name'); return; }
+  GITHUB_REPO = val;
+  localStorage.setItem(LS_REPO_KEY, val);
+  document.getElementById('repoLabel').textContent = val;
+  document.getElementById('configBanner').style.display = 'none';
+  closeModal('configModal');
+  showToast('🔗', `Connected to ${val}`);
+  fetchData();
+}
+
+function initConfig() {
+  if(GITHUB_REPO) {
+    document.getElementById('repoLabel').textContent = GITHUB_REPO;
+    document.getElementById('configBanner').style.display = 'none';
+    const ri = document.getElementById('repoInput');
+    const ci = document.getElementById('configRepoInput');
+    if(ri) ri.value = GITHUB_REPO;
+    if(ci) ci.value = GITHUB_REPO;
+  } else {
+    document.getElementById('configBanner').style.display = 'flex';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════════════════════
+async function fetchData() {
+  if(!GITHUB_REPO) {
+    setStatus('error','No repo configured');
+    showToast('⚠️','Configure your GitHub repo first');
+    return;
+  }
+  setStatus('loading','Fetching...');
+  const btn = document.getElementById('syncBtn');
+  if(btn) { btn.disabled = true; btn.textContent = '⏳ Loading'; }
+
+  try {
+    const res = await fetch(rawUrl());
+    if(!res.ok) throw new Error(`HTTP ${res.status} — check repo name and that data/accounts.json exists`);
+    const payload = await res.json();
+    currentPayload = payload;
+    accounts = payload.accounts || [];
+
+    if(accounts.length === 0) throw new Error('accounts array is empty in JSON');
+
+    activeAccountId = accounts.length === 1 ? accounts[0].id : 'all';
+
+    // Timestamp
+    const genAt = payload.generated_at ? new Date(payload.generated_at) : new Date();
+    const ago   = timeAgo(genAt);
+    document.getElementById('lastSyncLabel').textContent = `Data from ${ago}`;
+    document.getElementById('footerNote').textContent =
+      `StorageIQ · v${payload.schema_version||1} · synced ${ago} · github.com/${GITHUB_REPO}`;
+
+    setStatus('live',`Live · ${accounts.length} account${accounts.length>1?'s':''}`);
+    renderAll();
+    fetchCommitHistory();
+
+    showToast('✅', `Loaded ${accounts.length} account(s) from GitHub`);
+  } catch(err) {
+    setStatus('error', 'Fetch failed');
+    showToast('❌', `Error: ${err.message}`);
+    console.error('StorageIQ fetch error:', err);
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = '⟳ Refresh'; }
+  }
+}
+
+async function fetchCommitHistory() {
+  if(!GITHUB_REPO) return;
+  try {
+    const res = await fetch(commitsUrl(), {
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    if(!res.ok) return;
+    commitHistory = await res.json();
+    renderCommitStrip();
+    renderHistoryModal();
+  } catch(e) { console.warn('Commit history fetch failed:', e); }
+}
+
+async function loadCommitVersion(sha) {
+  setStatus('loading', `Loading commit ${sha.slice(0,7)}...`);
+  try {
+    const res  = await fetch(commitUrl(sha), { headers:{'Accept':'application/vnd.github+json'} });
+    const meta = await res.json();
+    const content = atob(meta.content.replace(/\n/g,''));
+    const payload = JSON.parse(content);
+    currentPayload = payload;
+    accounts = payload.accounts || [];
+    activeAccountId = accounts.length===1 ? accounts[0].id : 'all';
+    renderAll();
+    closeModal('historyModal');
+    showToast('📦', `Loaded snapshot from commit ${sha.slice(0,7)}`);
+    setStatus('live', `Snapshot · ${sha.slice(0,7)}`);
+  } catch(e) {
+    setStatus('error','Load failed');
+    showToast('❌',`Could not load commit: ${e.message}`);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — main entry point after data load
+// ═══════════════════════════════════════════════════════════════
+function renderAll() {
+  renderSlicerChips();
+  renderSidebarAccounts();
+  applyAccountData();
+  renderServiceGrid();
+  renderRecommendations();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACCOUNT SWITCHER
+// ═══════════════════════════════════════════════════════════════
+function switchAccount(id) {
+  activeAccountId = id;
+  renderSlicerChips();
+  renderSidebarAccounts();
+  applyAccountData();
+  renderServiceGrid();
+  renderRecommendations();
+}
+
+function getActiveData() {
+  if(activeAccountId==='all' || accounts.length===0) {
+    return aggregateAll();
+  }
+  return accounts.find(a=>a.id===activeAccountId) || accounts[0];
+}
+
+function aggregateAll() {
+  const sum = fn => Math.round(accounts.reduce((t,a)=>t+fn(a),0)*10)/10;
+  const usedGB  = sum(a=>a.used_gb);
+  const totalGB = sum(a=>a.total_gb);
+  const healthPct = Math.round(accounts.reduce((t,a)=>t+a.health_pct,0)/accounts.length);
+  return {
+    id:'all', name:'All Accounts', email:`${accounts.length} accounts`,
+    used_gb:usedGB, total_gb:totalGB, free_gb:Math.round((totalGB-usedGB)*10)/10,
+    pct_used:Math.round((usedGB/totalGB)*100),
+    health_pct:healthPct, health_grade:grade(healthPct),
+    spam_gb:sum(a=>a.spam_gb), recover_gb:sum(a=>a.recover_gb),
+    junk_mb:sum(a=>a.junk_mb), dup_gb:sum(a=>a.dup_gb),
+    days_left:Math.min(...accounts.map(a=>a.days_left)),
+    plan:`${accounts.length} accounts combined`,
+  };
+}
+
+function grade(p){ if(p>=92)return'A';if(p>=82)return'B';if(p>=72)return'B−';if(p>=62)return'C+';if(p>=50)return'C';return'D'; }
+
+function renderSlicerChips() {
+  const el = document.getElementById('acctSlicer');
+  let html = '';
+
+  if(accounts.length > 1) {
+    html += `<div class="slicer-chip slicer-all${activeAccountId==='all'?' slicer-active':''}" onclick="switchAccount('all')"><span>⬡</span> All</div>`;
+    html += `<div class="slicer-divider"></div>`;
+  }
+
+  accounts.forEach(acc=>{
+    html += `<div class="slicer-chip${activeAccountId===acc.id?' slicer-active':''}" onclick="switchAccount('${acc.id}')">
+      <div class="slicer-chip-avatar" style="background:linear-gradient(135deg,${acc.gradient[0]},${acc.gradient[1]})">${acc.initials}</div>
+      <span class="slicer-chip-label">${acc.email.split('@')[0]}</span>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function renderSidebarAccounts() {
+  const el = document.getElementById('sidebarAccountList');
+  let html = `<div class="sidebar-accounts-label">Accounts (${accounts.length})</div>`;
+  accounts.forEach(acc=>{
+    const pct = acc.pct_used||0;
+    const dotColor = pct>85?'#FF4D6D':pct>65?'#FFB020':'#00E676';
+    const isActive = activeAccountId===acc.id;
+    html += `<div class="acct-item${isActive?' acct-active':''}" onclick="switchAccount('${acc.id}')">
+      <div class="acct-avatar" style="background:linear-gradient(135deg,${acc.gradient[0]},${acc.gradient[1]})">
+        ${acc.initials}
+        <div class="acct-avatar-dot" style="background:${dotColor}"></div>
+      </div>
+      <div class="acct-info">
+        <div class="acct-name">${acc.name}</div>
+        <div class="acct-email">${acc.email}</div>
+      </div>
+      <div class="acct-storage-mini">${acc.used_gb}G</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APPLY DATA TO KPIs + BARS + GALAXY
+// ═══════════════════════════════════════════════════════════════
+function applyAccountData() {
+  const d = getActiveData();
+  const isAll = activeAccountId==='all';
+
+  // Combined banner
+  const banner = document.getElementById('combinedBanner');
+  if(isAll && accounts.length>1) {
+    banner.style.display='flex';
+    document.getElementById('combinedCount').textContent = accounts.length;
+    document.getElementById('combinedChips').innerHTML = accounts.map(a=>
+      `<div class="combined-chip"><div style="width:8px;height:8px;border-radius:50%;background:${a.gradient[0]}"></div>${a.email.split('@')[0]}</div>`
+    ).join('');
+  } else {
+    banner.style.display='none';
+  }
+
+  // KPIs
+  setText('kpi-storage', `${d.used_gb}<span>GB</span>`);
+  setText('kpi-spam',    `${d.spam_gb}<span>GB</span>`);
+  setText('kpi-recover', `${d.recover_gb}<span>GB</span>`);
+  setText('kpi-health',  `${d.health_pct}<span>%</span>`);
+  setText('kpi-days',    `~${d.days_left}<span>d</span>`);
+
+  const hDelta = document.getElementById('kpi-health-delta');
+  if(hDelta){ hDelta.textContent = d.health_pct>=80?'↑ Healthy':'↑ Needs attention'; hDelta.className='kpi-delta '+(d.health_pct>=80?'good':'warn'); }
+  const sDelta = document.getElementById('kpi-storage-delta');
+  if(sDelta){ sDelta.textContent = `${d.pct_used}% of ${d.total_gb} GB used`; }
+
+  // Storage bars
+  setTimeout(()=>{
+    const mb=document.getElementById('mainBar'); if(mb) mb.style.width=(d.pct_used||0)+'%';
+    const hb=document.getElementById('healthBar'); if(hb) hb.style.width=(d.health_pct||0)+'%';
+  },100);
+
+  // Health grade color
+  const hg=document.getElementById('healthGrade');
+  if(hg){ hg.textContent=d.health_grade||'?'; hg.style.color=d.health_pct>=82?'var(--green)':d.health_pct>=62?'var(--amber)':'var(--rose)'; }
+
+  // Stat boxes
+  setText('stat-used', `${d.used_gb} GB`);
+  setText('stat-free', `${d.free_gb} GB`);
+  setText('stat-junk', `${d.junk_mb} MB`);
+  setText('stat-dup',  `${d.dup_gb} GB`);
+
+  // Quota header
+  const qs = document.getElementById('quotaSubLabel');
+  if(qs) qs.textContent = `${d.plan} · ${d.total_gb} GB quota`;
+
+  // Galaxy
+  const pct = d.pct_used||0;
+  setText('galaxyPct', `${pct}%`);
+  setText('galaxySubLabel', `${d.used_gb} / ${d.total_gb} GB`);
+
+  // Galaxy legend + servicesData update
+  if(!isAll && d.services) {
+    const svc = d.services;
+    const tot = d.used_gb||1;
+    servicesData[0].pct = (svc.gmail?.used_gb||0)/tot;
+    servicesData[1].pct = (svc.drive?.used_gb||0)/tot;
+    servicesData[2].pct = (svc.photos?.used_gb||0)/tot;
+    servicesData[3].pct = (svc.other?.used_gb||0)/tot;
+
+    document.getElementById('galaxyLegend').innerHTML = [
+      { l:'Gmail',  c:'#EA4335', gb:svc.gmail?.used_gb||0  },
+      { l:'Drive',  c:'#4285F4', gb:svc.drive?.used_gb||0  },
+      { l:'Photos', c:'#34A853', gb:svc.photos?.used_gb||0 },
+      { l:'Other',  c:'#FBBC04', gb:svc.other?.used_gb||0  },
+    ].map((s,i)=>`
+      <div class="legend-item" onclick="highlighted=${i}">
+        <div class="legend-dot" style="background:${s.c}"></div>
+        <span class="legend-label">${s.l}</span>
+        <span class="legend-size">${s.gb} GB</span>
+        <span class="legend-pct">${Math.round(s.gb/tot*100)}%</span>
+      </div>`).join('');
+  }
+
+  setText('galaxySub', isAll
+    ? `Combined view across ${accounts.length} Google accounts · ${d.used_gb} / ${d.total_gb} GB total`
+    : `${d.email} · ${d.plan}`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SERVICE CARDS (dynamic from JSON)
+// ═══════════════════════════════════════════════════════════════
+function renderServiceGrid() {
+  const grid = document.getElementById('serviceGrid');
+  if(!grid) return;
+  const d = getActiveData();
+
+  if(!d.services && activeAccountId!=='all') {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">No service detail available for this account.</div>`;
+    return;
+  }
+
+  const svc = activeAccountId==='all'
+    ? aggregateServices()
+    : d.services;
+
+  const cards = [
+    {
+      name:'Gmail', type:`Email · ${fmt(svc.gmail?.msg_count||0)} messages`,
+      icon:'📧', bg:'rgba(234,67,53,.12)', glow:'#EA4335', color:'#EA4335,#FF6B5B',
+      usedGb:svc.gmail?.used_gb||0, totalGb:d.total_gb, pct:svc.gmail?.pct||0,
+      tags:[
+        {cls:'danger',text:`🗑 Spam: ${fmt(svc.gmail?.spam_count||0)}`},
+        {cls:'ok',    text:`📥 Inbox: ${fmt(svc.gmail?.inbox_count||0)}`},
+        {cls:'warning',text:`📣 Promos: ${fmt(svc.gmail?.promo_count||0)}`},
+      ],
+      stats:[
+        {val:fmtK(svc.gmail?.spam_count||0), label:'Spam',   color:'#EA4335'},
+        {val:fmtK(svc.gmail?.promo_count||0),label:'Promos', color:'#FBBC04'},
+        {val:fmtK(svc.gmail?.inbox_count||0),label:'Inbox',  color:'#34A853'},
+        {val:fmtK(svc.gmail?.msg_count||0),  label:'Total',  color:'#4285F4'},
+      ]
+    },
+    {
+      name:'Google Drive', type:`${fmt(svc.drive?.file_count||0)} files · ${fmt(svc.drive?.folder_count||0)} folders`,
+      icon:'💾', bg:'rgba(66,133,244,.12)', glow:'#4285F4', color:'#4285F4,#6BA3F5',
+      usedGb:svc.drive?.used_gb||0, totalGb:d.total_gb, pct:svc.drive?.pct||0,
+      tags:[
+        {cls:'warning',text:`🔁 Dupes: ${fmt(svc.drive?.duplicate_count||0)} (${svc.drive?.duplicate_gb||0} GB)`},
+        {cls:'info',   text:`📁 Files: ${fmt(svc.drive?.file_count||0)}`},
+      ],
+      stats:[
+        {val:fmtK(svc.drive?.file_count||0),   label:'Files',  color:'#4285F4'},
+        {val:fmtK(svc.drive?.folder_count||0),  label:'Folders',color:'#FBBC04'},
+        {val:fmtK(svc.drive?.duplicate_count||0),label:'Dupes', color:'#EA4335'},
+        {val:`${svc.drive?.used_gb||0}`,         label:'GB',     color:'#34A853'},
+      ]
+    },
+    {
+      name:'Google Photos', type:`${fmt(svc.photos?.total_items||0)} items · ${fmt(svc.photos?.album_count||0)} albums`,
+      icon:'🖼', bg:'rgba(52,168,83,.12)', glow:'#34A853', color:'#34A853,#5BC878',
+      usedGb:svc.photos?.used_gb||0, totalGb:d.total_gb, pct:svc.photos?.pct||0,
+      tags:[
+        {cls:'info',   text:`📷 Photos: ${fmt(svc.photos?.photo_count||0)}`},
+        {cls:'warning',text:`🎥 Videos: ${fmt(svc.photos?.video_count||0)}`},
+        {cls:'ok',     text:`🗂 Albums: ${fmt(svc.photos?.album_count||0)}`},
+      ],
+      stats:[
+        {val:fmtK(svc.photos?.total_items||0), label:'Items',  color:'#34A853'},
+        {val:fmtK(svc.photos?.photo_count||0), label:'Photos', color:'#FBBC04'},
+        {val:fmtK(svc.photos?.video_count||0), label:'Videos', color:'#4285F4'},
+        {val:fmtK(svc.photos?.album_count||0), label:'Albums', color:'#EA4335'},
+      ]
+    },
+    {
+      name:'Other Services', type:'Meet · Contacts · Calendar',
+      icon:'🎥', bg:'rgba(0,131,45,.12)', glow:'#00832D', color:'#00832D,#34A853',
+      usedGb:svc.other?.used_gb||0, totalGb:d.total_gb, pct:svc.other?.pct||0,
+      tags:[
+        {cls:'ok',  text:`🗓 Calendar synced`},
+        {cls:'info',text:`👤 Contacts saved`},
+      ],
+      stats:[
+        {val:`${svc.other?.used_gb||0}`,label:'GB Used', color:'#00832D'},
+        {val:`${svc.other?.pct||0}%`,   label:'Of Quota',color:'#34A853'},
+        {val:'—', label:'Recordings',   color:'#4285F4'},
+        {val:'—', label:'Meet',         color:'#FBBC04'},
+      ]
+    },
+  ];
+
+  grid.innerHTML = cards.map(c=>`
+    <div class="service-card">
+      <div class="service-card-glow" style="background:${c.glow}"></div>
+      <div class="service-top">
+        <div class="service-icon" style="background:${c.bg}">${c.icon}</div>
+        <div>
+          <div class="service-name">${c.name}</div>
+          <div class="service-type">${c.type}</div>
+        </div>
+      </div>
+      <div class="meter-row"><span class="meter-label">Storage used</span><span class="meter-val">${c.usedGb} / ${c.totalGb} GB</span></div>
+      <div class="meter-bar"><div class="meter-fill" style="width:${Math.min(100,c.pct)}%;background:linear-gradient(90deg,${c.color})"></div></div>
+      <div class="service-tags">${c.tags.map(t=>`<span class="tag ${t.cls}">${t.text}</span>`).join('')}</div>
+      <div class="service-stats-row">${c.stats.map(s=>`
+        <div class="sstat">
+          <div class="sstat-val" style="color:${s.color}">${s.val}</div>
+          <div class="sstat-label">${s.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function aggregateServices() {
+  const sumSvc = (key, prop) => accounts.reduce((t,a)=>t+(a.services?.[key]?.[prop]||0),0);
+  return {
+    gmail:  { used_gb:round(sumSvc('gmail','used_gb')), msg_count:sumSvc('gmail','msg_count'), inbox_count:sumSvc('gmail','inbox_count'), spam_count:sumSvc('gmail','spam_count'), promo_count:sumSvc('gmail','promo_count'), pct:round(sumSvc('gmail','used_gb')/accounts.reduce((t,a)=>t+a.total_gb,0)*100) },
+    drive:  { used_gb:round(sumSvc('drive','used_gb')), file_count:sumSvc('drive','file_count'), folder_count:sumSvc('drive','folder_count'), duplicate_count:sumSvc('drive','duplicate_count'), duplicate_gb:round(sumSvc('drive','duplicate_gb')), pct:0 },
+    photos: { used_gb:round(sumSvc('photos','used_gb')), total_items:sumSvc('photos','total_items'), photo_count:sumSvc('photos','photo_count'), video_count:sumSvc('photos','video_count'), album_count:sumSvc('photos','album_count'), pct:0 },
+    other:  { used_gb:round(sumSvc('other','used_gb')), pct:0 },
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RECOMMENDATIONS (derived from live data)
+// ═══════════════════════════════════════════════════════════════
+function renderRecommendations() {
+  const d = getActiveData();
+  const recos = [];
+
+  if(d.spam_gb > 0.1)
+    recos.push({ p:'high', icon:'🔴', text:`${d.spam_gb} GB in spam & trash. Delete all spam immediately for the biggest instant win.`, save:`Save ${d.spam_gb} GB` });
+
+  if(d.services?.drive?.duplicate_gb > 0)
+    recos.push({ p:'high', icon:'🔴', text:`${d.services.drive.duplicate_count} duplicate files detected in Drive consuming ${d.services.drive.duplicate_gb} GB. Run dedup to reclaim space.`, save:`Save ${d.services.drive.duplicate_gb} GB` });
+
+  if(d.services?.photos?.video_count > 10)
+    recos.push({ p:'med', icon:'🟡', text:`${d.services.photos.video_count} videos in Photos. Switch upload quality to "Storage Saver" for significant compression with minimal visual loss.`, save:`Est. 20–40% reduction` });
+
+  if(d.services?.gmail?.promo_count > 500)
+    recos.push({ p:'med', icon:'🟡', text:`${fmt(d.services.gmail.promo_count)} promotional emails detected. Bulk-delete those older than 3 months.`, save:`Est. 500+ MB` });
+
+  if(d.days_left < 90)
+    recos.push({ p:'high', icon:'🔴', text:`At current growth rate you have only ~${d.days_left} days before quota is full. Take action now or upgrade to Google One.`, save:`Urgent` });
+  else if(d.days_left < 200)
+    recos.push({ p:'med', icon:'🟡', text:`~${d.days_left} days until full. Consider a cleanup schedule or upgrading to 100 GB Google One (~$1.99/mo).`, save:`Future-proof` });
+
+  if(d.health_pct < 60)
+    recos.push({ p:'high', icon:'🔴', text:`Health score ${d.health_pct}% (${d.health_grade}). Your account needs urgent cleanup across Gmail and Drive.`, save:`Boost to A` });
+
+  recos.push({ p:'low', icon:'🟢', text:`Run sync weekly using the GitHub Action to track storage trends over time. Each commit is a point-in-time snapshot.`, save:`Audit trail` });
+
+  const pClass = {high:'high',med:'med',low:'low'};
+  document.getElementById('recoList').innerHTML = recos.slice(0,6).map(r=>`
+    <div class="reco-item">
+      <div class="reco-priority ${pClass[r.p]}">${r.icon} ${r.p.toUpperCase()} PRIORITY</div>
+      <div class="reco-text">${r.text}</div>
+      <div class="reco-save">${r.save}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMMIT STRIP + HISTORY MODAL
+// ═══════════════════════════════════════════════════════════════
+function renderCommitStrip() {
+  const strip = document.getElementById('ghStrip');
+  const commits = document.getElementById('ghCommits');
+  if(!strip || !commitHistory.length) return;
+  strip.style.display = 'flex';
+  commits.innerHTML = commitHistory.slice(0,8).map(c=>`
+    <a class="gh-commit" onclick="loadCommitVersion('${c.sha}')" href="javascript:void(0)" title="${c.commit.message}">
+      <span class="gh-commit-sha">${c.sha.slice(0,7)}</span>
+      <span class="gh-commit-msg">${c.commit.message.slice(0,40)}</span>
+      <span class="gh-commit-time">${timeAgo(new Date(c.commit.author.date))}</span>
+    </a>`).join('');
+}
+
+function renderHistoryModal() {
+  document.getElementById('historyList').innerHTML = commitHistory.map(c=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg4);border-radius:10px;border:1px solid var(--border)">
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--cyan);flex-shrink:0">${c.sha.slice(0,7)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.commit.message}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${c.commit.author.name} · ${new Date(c.commit.author.date).toLocaleString()}</div>
+      </div>
+      <button onclick="loadCommitVersion('${c.sha}')" style="background:var(--glass2);border:1px solid var(--border-cyan);color:var(--cyan);padding:5px 10px;border-radius:7px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Load ›</button>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GALAXY CANVAS
+// ═══════════════════════════════════════════════════════════════
+const canvas = document.getElementById('galaxyCanvas');
+const ctx    = canvas.getContext('2d');
+const W=canvas.width, H=canvas.height, cx=W/2, cy=H/2;
+const gap = 0.03;
+
+function drawGalaxy(prog) {
+  ctx.clearRect(0,0,W,H);
+  const gr=ctx.createRadialGradient(cx,cy,10,cx,cy,90);
+  gr.addColorStop(0,'rgba(0,212,255,0.06)');gr.addColorStop(1,'transparent');
+  ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+  let start=-Math.PI/2; const R=86,r=54;
+  servicesData.forEach((s,i)=>{
+    const sweep=s.pct*2*Math.PI*prog-gap; if(sweep<=0)return;
+    const hi=highlighted===i; const outerR=hi?R+6:R;
+    if(hi){ctx.shadowColor=s.color;ctx.shadowBlur=18;}
+    ctx.beginPath();
+    ctx.moveTo(cx+r*Math.cos(start+gap/2),cy+r*Math.sin(start+gap/2));
+    ctx.arc(cx,cy,outerR,start+gap/2,start+sweep);
+    ctx.arc(cx,cy,r,start+sweep,start+gap/2,true);
+    ctx.closePath();
+    const grd=ctx.createRadialGradient(cx,cy,r,cx,cy,outerR);
+    grd.addColorStop(0,s.color+'CC');grd.addColorStop(1,s.color);
+    ctx.fillStyle=grd; ctx.fill(); ctx.shadowBlur=0;
+    const mid=start+gap/2+sweep/2, oR=R+20;
+    const dotX=cx+oR*Math.cos(mid+spinAngle*.001), dotY=cy+oR*Math.sin(mid+spinAngle*.001);
+    ctx.beginPath();ctx.arc(dotX,dotY,3,0,Math.PI*2);
+    ctx.fillStyle=s.color;ctx.shadowColor=s.color;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
+    start+=s.pct*2*Math.PI*prog;
+  });
+  ctx.beginPath();ctx.arc(cx,cy,r-2,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R+14,0,Math.PI*2);ctx.strokeStyle='rgba(0,212,255,0.08)';ctx.lineWidth=.5;ctx.stroke();
+}
+
+(function galaxyLoop() {
+  if(animProg<1){ animProg=Math.min(1,animProg+0.018); drawGalaxy(animProg); }
+  else { spinAngle++; drawGalaxy(1); }
+  requestAnimationFrame(galaxyLoop);
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function setText(id,html){ const e=document.getElementById(id); if(e) e.innerHTML=html; }
+function fmt(n){ if(n>=1000000) return (n/1000000).toFixed(1)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return n; }
+function fmtK(n){ if(n>=1000) return Math.round(n/1000)+'K'; return n; }
+function round(n){ return Math.round(n*10)/10; }
+function timeAgo(d){
+  const s=Math.floor((Date.now()-d)/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+function setStatus(type, text) {
+  const p=document.getElementById('statusPill');
+  const t=document.getElementById('statusText');
+  if(p){ p.className=`status-pill ${type}`; }
+  if(t){ t.textContent=text; }
+}
+
+let toastTimer;
+function showToast(icon, msg) {
+  document.getElementById('toastIcon').textContent=icon;
+  document.getElementById('toastMsg').textContent=msg;
+  const t=document.getElementById('toast'); t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function closeOnBg(e,id){ if(e.target.id===id) closeModal(id); }
+
+function exportJSON() {
+  if(!currentPayload){ showToast('⚠️','No data loaded yet'); return; }
+  const blob=new Blob([JSON.stringify(currentPayload,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`storageiq-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  showToast('📤','JSON exported');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', ()=>{
+  initConfig();
+  if(GITHUB_REPO) fetchData();
+  // Auto-refresh every 10 minutes
+  setInterval(()=>{ if(GITHUB_REPO) fetchData(); }, 10*60*1000);
+});
+</script>
+</body>
+</html>
