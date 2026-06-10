@@ -22,6 +22,20 @@
     --glass:rgba(255,255,255,0.04);--glass2:rgba(0,212,255,0.06);
     --border:rgba(255,255,255,0.07);--border-cyan:rgba(0,212,255,0.2);
   }
+  /* ── Light mode ── */
+  body.light{
+    --bg:#F0F4FF;--bg2:#E4EAF8;--bg3:#FFFFFF;--bg4:#EEF2FC;
+    --text:#0D1628;--muted:#5A6A8A;--subtle:#D0D8EE;
+    --glass:rgba(0,0,0,0.03);--glass2:rgba(0,130,200,0.07);
+    --border:rgba(0,0,0,0.09);--border-cyan:rgba(0,130,200,0.25);
+  }
+  /* ── Theme toggle button ── */
+  .theme-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;background:none;border:1px solid var(--border);font-family:'Inter',sans-serif;transition:all .15s;margin-bottom:4px}
+  .theme-btn:hover{background:var(--glass);color:var(--text)}
+  .theme-toggle-track{width:36px;height:20px;border-radius:20px;background:var(--subtle);margin-left:auto;position:relative;transition:background .2s;flex-shrink:0}
+  .theme-toggle-thumb{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  body.light .theme-toggle-track{background:var(--cyan)}
+  body.light .theme-toggle-thumb{transform:translateX(16px)}
   html{font-size:14px;scroll-behavior:smooth}
   body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
 
@@ -329,11 +343,18 @@
         <div class="nav-label">Version Control</div>
         <div class="nav-item" onclick="openModal('historyModal')"><span class="nav-icon">📦</span> Commits</div>
         <div class="nav-item" onclick="fetchData()"><span class="nav-icon">⟳</span> Force Refresh</div>
-        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Accounts</div>
+        <div class="nav-item" onclick="openModal('addAccountModal')" style="color:#00D4FF;border:1px dashed rgba(0,212,255,0.3)"><span class="nav-icon">＋</span> Add Account</div>
+      </div>
       <div class="nav-section">
         <div class="nav-label">Appearance</div>
-        <div class="nav-item" onclick="toggleTheme()"><span class="nav-icon" id="themeIcon">🌙</span> <span id="themeLabel">Dark Mode</span></div>
-      </div>
+        <button class="theme-btn" onclick="toggleTheme()">
+          <span id="themeIcon">🌙</span>
+          <span id="themeLabel">Dark Mode</span>
+          <div class="theme-toggle-track"><div class="theme-toggle-thumb"></div></div>
+        </button>
       </div>
     </nav>
     <div class="sidebar-accounts" id="sidebarAccountList">
@@ -544,9 +565,7 @@
 // ═══════════════════════════════════════════════════════════════
 // MOBILE SIDEBAR DRAWER
 // ═══════════════════════════════════════════════════════════════
-  function toggleTheme(){var l=document.body.classList.toggle('light');localStorage.setItem('storageiq_theme',l?'light':'dark');var i=document.getElementById('themeIcon');var lb=document.getElementById('themeLabel');if(i)i.textContent=l?'☀️':'🌙';if(lb)lb.textContent=l?'Light Mode':'Dark Mode';}
-  function initTheme(){if(localStorage.getItem('storageiq_theme')==='light'){document.body.classList.add('light');setTimeout(function(){var i=document.getElementById('themeIcon');var lb=document.getElementById('themeLabel');if(i)i.textContent='☀️';if(lb)lb.textContent='Light Mode';},100);}}
-  function openSidebar() {
+function openSidebar() {
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('drawerOverlay');
   sb.classList.add('drawer-open');
@@ -793,12 +812,16 @@ function renderSlicerChips() {
 
 function renderSidebarAccounts() {
   const el = document.getElementById('sidebarAccountList');
-  let html = `<button onclick="openModal('addAccountModal')" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px;margin-bottom:10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);border-radius:9px;color:#00D4FF;font-size:13px;font-weight:600;cursor:pointer">＋ Add Account</button><div class="sidebar-accounts-label">Accounts (${accounts.length})</div>`;
+  // Add Account button at TOP so always visible without scrolling
+  let html = `<div class="sidebar-accounts-label">Accounts (${accounts.length})</div>
+  <button class="acct-add-btn" onclick="openModal('addAccountModal')" style="margin-bottom:8px;background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.3);color:#00D4FF">
+    <div class="acct-add-icon">＋</div> Add Google Account
+  </button>`;
   accounts.forEach(acc=>{
     const pct = acc.pct_used||0;
     const dotColor = pct>85?'#FF4D6D':pct>65?'#FFB020':'#00E676';
     const isActive = activeAccountId===acc.id;
-    html += `<div class="acct-item${isActive?' acct-active':''}" onclick="switchAccount('${acc.id}')">
+    html += `<div class="acct-item${isActive?' acct-active':''}" onclick="switchAccount('${acc.id}');closeSidebar()">
       <div class="acct-avatar" style="background:linear-gradient(135deg,${acc.gradient[0]},${acc.gradient[1]})">
         ${acc.initials}
         <div class="acct-avatar-dot" style="background:${dotColor}"></div>
@@ -1163,11 +1186,31 @@ function exportJSON() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════════════════════════
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('storageiq_theme', isLight ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isLight ? 'Light Mode' : 'Dark Mode';
+}
+function initTheme() {
+  const saved = localStorage.getItem('storageiq_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    const icon = document.getElementById('themeIcon');
+    const label = document.getElementById('themeLabel');
+    if (icon) icon.textContent = '☀️';
+    if (label) label.textContent = 'Light Mode';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
 window.addEventListener('load', ()=>{
-  applyMobileLayout();
   initTheme();
+  applyMobileLayout();
   initConfig();
   if(GITHUB_REPO) fetchData();
   setInterval(()=>{ if(GITHUB_REPO) fetchData(); }, 10*60*1000);
