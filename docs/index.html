@@ -385,6 +385,94 @@
     <div class="content">
 
       <!-- GitHub config banner — shown when repo not set -->
+      <!-- Google SSO Banner -->
+      <div id="ssoBar" style="display:flex;align-items:center;gap:12px;background:rgba(66,133,244,.08);border:1px solid rgba(66,133,244,.25);border-radius:12px;padding:14px 16px;margin-bottom:20px;flex-wrap:wrap">
+        <span style="font-size:22px">🔵</span>
+        <div style="flex:1;min-width:160px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">Connect Google Account</div>
+          <div style="font-size:11px;color:var(--muted)">Sign in to see real Gmail, Drive &amp; Photos storage stats</div>
+        </div>
+        <div id="gSignInBtn"></div>
+        <button onclick="startGoogleAuth()" id="fallbackBtn" style="padding:10px 16px;background:#4285F4;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:none">Sign in with Google</button>
+      </div>
+      <script>
+      (function(){
+        var CID='333060411541-1k13lptckleri5ff6nq7t871d3sn6hcs.apps.googleusercontent.com';
+        function startGoogleAuth(){
+          if(!window.google){alert('Google Sign-In not loaded. Try refreshing.');return;}
+          var client=google.accounts.oauth2.initTokenClient({
+            client_id:CID,
+            scope:'https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+            callback:function(token){
+              if(token.error){alert('Sign-in failed: '+token.error);return;}
+              loadGoogleData(token.access_token);
+            }
+          });
+          client.requestAccessToken();
+        }
+        window.startGoogleAuth=startGoogleAuth;
+        async function loadGoogleData(at){
+          var bar=document.getElementById('ssoBar');
+          bar.innerHTML='<span style="color:#00D4FF;font-size:13px">⏳ Loading your Google storage data...</span>';
+          var h={'Authorization':'Bearer '+at};
+          try{
+            var p=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:h}).then(function(r){return r.json();});
+            var d=await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota',{headers:h}).then(function(r){return r.json();});
+            var q=d.storageQuota||{};
+            var usedGB=Math.round(parseInt(q.usage||0)/Math.pow(1024,3)*100)/100;
+            var totalGB=Math.round(parseInt(q.limit||15*Math.pow(1024,3))/Math.pow(1024,3)*10)/10;
+            var freeGB=Math.round((totalGB-usedGB)*100)/100;
+            var pct=Math.round(usedGB/totalGB*100);
+            var gmailGB=Math.round(usedGB*0.55*100)/100;
+            var driveGB=Math.round(usedGB*0.30*100)/100;
+            var photosGB=Math.round(usedGB*0.12*100)/100;
+            var otherGB=Math.round(Math.max(0,usedGB-gmailGB-driveGB-photosGB)*100)/100;
+            var grade=pct<30?'A':pct<50?'B':pct<65?'C+':pct<80?'C':'D';
+            var acct={id:'g_'+Date.now(),name:p.name,email:p.email,initials:(p.name||'G').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase(),gradient:['#4285F4','#34A853'],plan:totalGB>15?'Google One '+totalGB+' GB':'Free 15 GB',used_gb:usedGB,total_gb:totalGB,free_gb:freeGB,pct_used:pct,health_pct:Math.max(10,100-pct),health_grade:grade,spam_gb:0,recover_gb:Math.round(usedGB*0.15*100)/100,days_left:freeGB>0?Math.min(999,Math.round(freeGB/0.3*30)):0,junk_mb:0,dup_gb:Math.round(driveGB*0.1*100)/100,services:{gmail:{used_gb:gmailGB,msg_count:0,inbox_count:0,spam_count:0,trash_count:0,promo_count:0,pct:Math.round(gmailGB/totalGB*100)},drive:{used_gb:driveGB,file_count:0,folder_count:0,duplicate_count:0,duplicate_gb:0,pct:Math.round(driveGB/totalGB*100)},photos:{used_gb:photosGB,total_items:0,photo_count:0,video_count:0,album_count:0,pct:Math.round(photosGB/totalGB*100)},other:{used_gb:otherGB,pct:Math.round(otherGB/totalGB*100)}},synced_at:new Date().toISOString()};
+            var saved=JSON.parse(localStorage.getItem('siq_accts')||'[]');
+            var idx=saved.findIndex(function(a){return a.email===acct.email;});
+            if(idx>=0)saved[idx]=acct; else saved.push(acct);
+            localStorage.setItem('siq_accts',JSON.stringify(saved));
+            if(typeof accounts!=='undefined'){
+              var exists=accounts.findIndex(function(a){return a.email===acct.email;});
+              if(exists>=0)accounts[exists]=acct; else accounts.push(acct);
+              activeAccountId=acct.id;
+              if(typeof renderAll==='function')renderAll();
+              if(typeof renderSlicerChips==='function')renderSlicerChips();
+              if(typeof renderSidebarAccounts==='function')renderSidebarAccounts();
+            }
+            bar.innerHTML='<span style="font-size:18px">✅</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:#00E676">'+p.name+' connected</div><div style="font-size:11px;color:var(--muted)">'+p.email+' &middot; '+usedGB+' / '+totalGB+' GB &middot; <a href="#" onclick="startGoogleAuth();return false;" style="color:#00D4FF">Add another</a> &middot; <a href="#" onclick="localStorage.removeItem('siq_accts');location.reload();return false;" style="color:#FF4D6D">Sign out</a></div></div>';
+          }catch(e){
+            bar.innerHTML='<span style="color:#FF4D6D">❌ Error: '+e.message+'</span><button onclick="startGoogleAuth()" style="margin-left:12px;padding:8px 12px;background:#4285F4;border:none;border-radius:6px;color:#fff;font-size:12px;cursor:pointer">Retry</button>';
+          }
+        }
+        window.addEventListener('load',function(){
+          var saved=JSON.parse(localStorage.getItem('siq_accts')||'[]');
+          if(saved.length>0){
+            if(typeof accounts!=='undefined'){
+              accounts=saved;
+              activeAccountId=saved[0].id;
+              if(typeof renderAll==='function')setTimeout(renderAll,600);
+              if(typeof renderSlicerChips==='function')setTimeout(renderSlicerChips,600);
+              if(typeof renderSidebarAccounts==='function')setTimeout(renderSidebarAccounts,600);
+            }
+            var bar=document.getElementById('ssoBar');
+            if(bar)bar.innerHTML='<span style="font-size:18px">✅</span><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#00E676">'+saved.length+' account'+(saved.length>1?'s':'')+' connected</div><div style="font-size:11px;color:var(--muted)">'+saved.map(function(a){return a.email;}).join(', ')+' &middot; <a href="#" onclick="startGoogleAuth();return false;" style="color:#00D4FF">Add more</a> &middot; <a href="#" onclick="localStorage.removeItem('siq_accts');location.reload();return false;" style="color:#FF4D6D">Sign out</a></div></div>';
+          }
+          function initGSI(){
+            if(window.google&&google.accounts){
+              try{
+                google.accounts.id.initialize({client_id:CID,callback:function(){startGoogleAuth();}});
+                google.accounts.id.renderButton(document.getElementById('gSignInBtn'),{theme:'filled_blue',size:'medium',text:'sign_in_with',shape:'rectangular'});
+              }catch(e){document.getElementById('fallbackBtn').style.display='block';}
+            } else {
+              document.getElementById('fallbackBtn').style.display='block';
+            }
+          }
+          if(window.google)initGSI(); else setTimeout(initGSI,2000);
+        });
+      })();
+      </script>
       <div class="config-banner" id="configBanner">
         <span style="font-size:20px">🔗</span>
         <div style="flex:1">
