@@ -609,7 +609,7 @@ document.addEventListener('click', e => {
 const LS_REPO_KEY = 'storageiq_github_repo';
 let GITHUB_REPO   = localStorage.getItem(LS_REPO_KEY) || '';
 const DATA_PATH   = 'data/accounts.json';
-const BRANCH      = 'main';
+const BRANCH      = 'prod-release';
 
 // Raw GitHub content URL
 function rawUrl()    { return `https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/${DATA_PATH}?t=${Date.now()}`; }
