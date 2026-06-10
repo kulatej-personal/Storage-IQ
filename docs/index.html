@@ -347,7 +347,7 @@
       </div>
       <div class="nav-section">
         <div class="nav-label">Accounts</div>
-        <div class="nav-item" onclick="openModal('addAccountModal')" style="color:#00D4FF;border:1px dashed rgba(0,212,255,0.3)"><span class="nav-icon">＋</span> Add Account</div>
+
       </div>
       <div class="nav-section">
         <div class="nav-label">Appearance</div>
@@ -488,17 +488,29 @@
         }
       }
 
-      document.addEventListener('DOMContentLoaded',function(){
+      // Init — retry until main JS is ready
+      function ssoInit(){
         var sv=gs();
-        if(sv.length>0&&typeof accounts!=='undefined'){
-          accounts=sv; activeAccountId=sv[0].id;
-          setTimeout(function(){
-            if(typeof renderAll==='function')renderAll();
-            if(typeof renderSlicerChips==='function')renderSlicerChips();
-          },800);
-        }
         render();
-      });
+        if(sv.length>0){
+          if(typeof accounts!=='undefined'&&typeof renderAll==='function'){
+            accounts=sv; activeAccountId=sv[0].id;
+            setTimeout(function(){
+              if(typeof renderAll==='function')renderAll();
+              if(typeof renderSlicerChips==='function')renderSlicerChips();
+            },100);
+          } else {
+            // Main JS not ready yet, retry
+            setTimeout(ssoInit, 200);
+          }
+        }
+      }
+      // Run after everything loads
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded', function(){ setTimeout(ssoInit,300); });
+      } else {
+        setTimeout(ssoInit,300);
+      }
     })();
     </script>
   </aside>
@@ -951,8 +963,8 @@ function renderSlicerChips() {
 }
 
 function renderSidebarAccounts() {
-  // Delegated to SSO section — window.renderSidebarAccounts is overridden by SSO script
   if(window._ssoRender) window._ssoRender();
+  else setTimeout(function(){ if(window._ssoRender) window._ssoRender(); }, 500);
 }
 
 // ═══════════════════════════════════════════════════════════════
