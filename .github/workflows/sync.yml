@@ -1,0 +1,65 @@
+name: StorageIQ Auto-Sync
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      account:
+        description: 'Account index to sync (leave blank for all)'
+        required: false
+        default: ''
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write .env from secrets
+        run: |
+          cat > .env << 'ENVEOF'
+          GITHUB_TOKEN=${{ secrets.STORAGEIQ_GITHUB_TOKEN }}
+          GITHUB_REPO=${{ github.repository }}
+          GITHUB_BRANCH=prod-release
+          DATA_FILE=data/accounts.json
+          ACCOUNT_0_CREDENTIALS=credentials_account0.json
+          ACCOUNT_0_TOKEN=token_account0.json
+          ACCOUNT_0_LABEL=${{ secrets.ACCOUNT_0_LABEL }}
+          ACCOUNT_1_CREDENTIALS=credentials_account1.json
+          ACCOUNT_1_TOKEN=token_account1.json
+          ACCOUNT_1_LABEL=${{ secrets.ACCOUNT_1_LABEL }}
+          ENVEOF
+
+      - name: Write token files
+        run: |
+          echo "${{ secrets.TOKEN_ACCOUNT_0_B64 }}" | base64 -d > token_account0.json
+          echo "${{ secrets.TOKEN_ACCOUNT_1_B64 }}" | base64 -d > token_account1.json
+
+      - name: Run sync
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.account }}" ]; then
+            ARGS="--account ${{ github.event.inputs.account }}"
+          fi
+          python scripts/sync.py $ARGS
+
+      - name: Commit & push updated data
+        run: |
+          git config user.name  "StorageIQ Bot"
+          git config user.email "storageiq-bot@users.noreply.github.com"
+          git add data/accounts.json
+          git diff --cached --quiet || git commit -m "chore: auto-sync $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
