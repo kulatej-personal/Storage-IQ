@@ -544,7 +544,9 @@
 // ═══════════════════════════════════════════════════════════════
 // MOBILE SIDEBAR DRAWER
 // ═══════════════════════════════════════════════════════════════
-function openSidebar() {
+  function toggleTheme(){var l=document.body.classList.toggle('light');localStorage.setItem('storageiq_theme',l?'light':'dark');var i=document.getElementById('themeIcon');var lb=document.getElementById('themeLabel');if(i)i.textContent=l?'☀️':'🌙';if(lb)lb.textContent=l?'Light Mode':'Dark Mode';}
+  function initTheme(){if(localStorage.getItem('storageiq_theme')==='light'){document.body.classList.add('light');setTimeout(function(){var i=document.getElementById('themeIcon');var lb=document.getElementById('themeLabel');if(i)i.textContent='☀️';if(lb)lb.textContent='Light Mode';},100);}}
+  function openSidebar() {
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('drawerOverlay');
   sb.classList.add('drawer-open');
