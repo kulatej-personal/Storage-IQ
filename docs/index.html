@@ -786,7 +786,7 @@ function renderSlicerChips() {
 
 function renderSidebarAccounts() {
   const el = document.getElementById('sidebarAccountList');
-  let html = `<div class="sidebar-accounts-label">Accounts (${accounts.length})</div>`;
+  let html = `<button onclick="openModal('addAccountModal')" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px;margin-bottom:10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);border-radius:9px;color:#00D4FF;font-size:13px;font-weight:600;cursor:pointer">＋ Add Account</button><div class="sidebar-accounts-label">Accounts (${accounts.length})</div>`;
   accounts.forEach(acc=>{
     const pct = acc.pct_used||0;
     const dotColor = pct>85?'#FF4D6D':pct>65?'#FFB020':'#00E676';
