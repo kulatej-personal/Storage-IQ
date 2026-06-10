@@ -347,7 +347,7 @@
       </div>
       <div class="nav-section">
         <div class="nav-label">Accounts</div>
-        <div class="nav-item" onclick="openModal('addAccountModal')" style="color:#00D4FF;border:1px dashed rgba(0,212,255,0.3)"><span class="nav-icon">＋</span> Add Account</div>
+        <div class="nav-item" onclick="window.startGoogleAuth?window.startGoogleAuth():alert('Loading...')" style="color:#00D4FF;border:1px dashed rgba(0,212,255,0.3)"><span class="nav-icon">＋</span> Add Account</div>
       </div>
       <div class="nav-section">
         <div class="nav-label">Appearance</div>
@@ -903,7 +903,7 @@ function renderSidebarAccounts() {
   const el = document.getElementById('sidebarAccountList');
   // Add Account button at TOP so always visible without scrolling
   let html = `<div class="sidebar-accounts-label">Accounts (${accounts.length})</div>
-  <button class="acct-add-btn" onclick="openModal('addAccountModal')" style="margin-bottom:8px;background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.3);color:#00D4FF">
+  <button class="acct-add-btn" onclick="window.startGoogleAuth?window.startGoogleAuth():alert('Loading...')" style="margin-bottom:8px;background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.3);color:#00D4FF">
     <div class="acct-add-icon">＋</div> Add Google Account
   </button>`;
   accounts.forEach(acc=>{
