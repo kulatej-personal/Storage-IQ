@@ -382,7 +382,7 @@
           saved.forEach(function(a){
             var act=a.id===aid;
             var dot=a.pct_used>85?'#FF4D6D':a.pct_used>65?'#FFB020':'#00E676';
-            h+='<div onclick="window._ssw(''+a.id+'')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;background:'+(act?'var(--glass2)':'transparent')+';border:1px solid '+(act?'var(--border-cyan)':'transparent')+';border-radius:9px;margin-bottom:4px;cursor:pointer;transition:all .15s">'
+            h+='<div onclick="window._ssw(\"'+a.id+'\")' style="display:flex;align-items:center;gap:9px;padding:8px 10px;background:'+(act?'var(--glass2)':'transparent')+';border:1px solid '+(act?'var(--border-cyan)':'transparent')+';border-radius:9px;margin-bottom:4px;cursor:pointer;transition:all .15s">'
               +(a.picture?'<img src="'+a.picture+'" style="width:28px;height:28px;border-radius:50%;flex-shrink:0">'
               :'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,'+a.gradient[0]+','+a.gradient[1]+');display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0">'+a.initials+'</div>')
               +'<div style="flex:1;min-width:0">'
