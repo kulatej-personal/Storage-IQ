@@ -239,10 +239,11 @@
 
   ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--subtle);border-radius:4px}
 
-  /* ── Hamburger button (hidden on desktop) ── */
-  .menu-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;background:var(--glass2);border:1px solid var(--border-cyan);border-radius:9px;cursor:pointer;flex-shrink:0;transition:background .15s}
+  /* ── Hamburger button ── */
+  .menu-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--glass2);border:1px solid var(--border-cyan);border-radius:9px;cursor:pointer;flex-shrink:0;transition:background .15s}
   .menu-btn:hover{background:rgba(0,212,255,.14)}
   .menu-btn svg{width:18px;height:18px;stroke:var(--cyan);fill:none;stroke-width:2;stroke-linecap:round}
+  @media(min-width:769px){.menu-btn{display:none !important}}
 
   /* ── Drawer overlay ── */
   .drawer-overlay{position:fixed;inset:0;background:rgba(5,11,24,.72);backdrop-filter:blur(4px);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
