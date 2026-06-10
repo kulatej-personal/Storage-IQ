@@ -403,6 +403,7 @@
         el.innerHTML=h;
       }
       window.renderSidebarAccounts=render;
+      window._ssoRender=render;
 
       window._ssi=function(){
         render('load');
@@ -950,29 +951,8 @@ function renderSlicerChips() {
 }
 
 function renderSidebarAccounts() {
-  const el = document.getElementById('sidebarAccountList');
-  // Add Account button at TOP so always visible without scrolling
-  let html = `<div class="sidebar-accounts-label">Accounts (${accounts.length})</div>
-  <button class="acct-add-btn" onclick="openModal('addAccountModal')" style="margin-bottom:8px;background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.3);color:#00D4FF">
-    <div class="acct-add-icon">＋</div> Add Google Account
-  </button>`;
-  accounts.forEach(acc=>{
-    const pct = acc.pct_used||0;
-    const dotColor = pct>85?'#FF4D6D':pct>65?'#FFB020':'#00E676';
-    const isActive = activeAccountId===acc.id;
-    html += `<div class="acct-item${isActive?' acct-active':''}" onclick="switchAccount('${acc.id}');closeSidebar()">
-      <div class="acct-avatar" style="background:linear-gradient(135deg,${acc.gradient[0]},${acc.gradient[1]})">
-        ${acc.initials}
-        <div class="acct-avatar-dot" style="background:${dotColor}"></div>
-      </div>
-      <div class="acct-info">
-        <div class="acct-name">${acc.name}</div>
-        <div class="acct-email">${acc.email}</div>
-      </div>
-      <div class="acct-storage-mini">${acc.used_gb}G</div>
-    </div>`;
-  });
-  el.innerHTML = html;
+  // Delegated to SSO section — window.renderSidebarAccounts is overridden by SSO script
+  if(window._ssoRender) window._ssoRender();
 }
 
 // ═══════════════════════════════════════════════════════════════
