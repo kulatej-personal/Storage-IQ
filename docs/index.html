@@ -1167,6 +1167,7 @@ function exportJSON() {
 // ═══════════════════════════════════════════════════════════════
 window.addEventListener('load', ()=>{
   applyMobileLayout();
+  initTheme();
   initConfig();
   if(GITHUB_REPO) fetchData();
   setInterval(()=>{ if(GITHUB_REPO) fetchData(); }, 10*60*1000);
